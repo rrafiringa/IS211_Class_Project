@@ -1,0 +1,39 @@
+{% if not standalone %}{% extends 'generic.html' %}{% endif -%}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+{% block title %}Best Blog Ever{% endblock %}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="/static/jquery-ui.min.css"/>
+    <link rel="stylesheet" href="/static/jquery-ui.structure.min.css"/>
+    <link rel="stylesheet" href="/static/jquery-ui.theme.min.css"/>
+    <script type="javascript" language="javascript" src="/static/jquery-ui.min.js"/>
+    <script type="javascript" language="javascript">
+        $(function() {
+            $( "#accordion" ).accordion();
+        });
+    </script>
+{% endblock %}
+{% block contents %}
+    <div id="accordion">
+    {% for row in entries %}
+    <h3>{{ row['title'] }}</h3>
+    <div>
+        <p>Posted by: {{ row['username'] }} on {{ ts }}</p>
+        <p>{{ row['content'] }}</p>
+        <sub>{{ row['kwords'] }}</sub>
+    </div>
+    {% endfor %}
+    </div>
+    <div>
+    <form name="frmEntry" action="{{ url_for('new_post') }}" method="post">
+        <dl>
+            <dt>Title:</dt>
+            <dd><input type="text" name="title" size="50"/></dd>
+            <dt>Text:</dt>
+            <dd><textarea rows="10" cols="50" name="post"></textarea></dd>
+            <dt>Keywords (Comma Separated):</dt>
+            <dd><input type="text" name="kwords", size="50"/></dd>
+        </dl>
+    </form>
+    </div>
+{% endblock %}

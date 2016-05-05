@@ -1,0 +1,20 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+    {% block head %}
+    <link rel="stylesheet" href="/static/css/style.css" type="text/css">
+    <title>{% block title %}{% endblock %}</title>
+    {% endblock %}
+</head>
+<body>
+<div id="menu">
+{% block menu %}{% endblock %}
+</div>
+<div id="contents">
+{% block contents %}{% endblock %}
+</div>
+<div id="footer">
+{% block footer %}{% endblock %}
+</div>
+</body>
+</html>

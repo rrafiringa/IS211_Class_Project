@@ -1,0 +1,36 @@
+{% if not standalone %}{% extends 'generic.html' %}{% endif -%}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+{% block title %}Login{% endblock %}
+{% block head %}
+    {{ super() }}
+    <style>
+        #error{
+            color: red;
+            padding-top: 12px;
+        }
+    </style>
+{% endblock %}
+{% block contents %}
+
+    <form action="/login" method="post" name="frmLogin">
+        <div class="input-div">
+            <fieldset>
+                <legend>Log on</legend>
+                <label for="username">Username: </label>
+                <input id="username" name="user" type="text" size="8"/>
+                <label for="password">Password:</label>
+                <input id="password" name="pass" type="password" size="8"/>
+            </fieldset>
+        </div>
+        <div class="section">
+            <input id="submit" name="btnLogin" type="submit" value="Login"/>
+        </div>
+    </form>
+    <![CDATA[
+        {% if error %}
+        ]]>
+    <div id="error"><strong>Error:</strong>{{ error }}</div>
+    <![CDATA[
+        {% endif %}
+        ]]>
+{% endblock %}
