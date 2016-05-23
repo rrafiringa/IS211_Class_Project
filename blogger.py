@@ -81,9 +81,9 @@ def login():
     On success: go to /dashboard
     On fail: Go to /login with error
     """
-    session['logged_in'] = False
     error = None
     if request.method == 'POST':
+        session['logged_in'] = False
         user = request.form['user'].strip()
         pwd = request.form['pass'].strip()
 
@@ -93,13 +93,10 @@ def login():
             if user == row['username'] and pwd == row['password']:
                 session['username'] = row['username']
                 session['logged_in'] = True
-        else:
-            error = 'Wrong credentials, please try again.'
-
-        if session['logged_in']:
-            return redirect(url_for('dashboard'))
-    else:
-        return render_template('login.html', error=error)
+                return redirect(url_for('dashboard'))
+            else:
+                error = 'Wrong credentials, please try again.'
+    return render_template('login.html', error=error)
 
 
 @app.route('/dashboard', methods=['GET', 'POST'])
@@ -118,11 +115,9 @@ def dashboard():
             else:
                 action = 1
             mydb.update(g.db, 'posts', index, ('state',), (action,))
-
-        else:
-            user = session.get('username')
+        user = session['username']
         return render_template('dashboard.html',
-                               entries=getentries(g.db, user))
+                               entries=getentries(g.db, user), user=user)
     else:
         return redirect(url_for('login'))
 
@@ -154,23 +149,20 @@ def new_post():
     return redirect(url_for('dashboard'))
 
 
-@app.route('/delete_post/<int:pid>')
+@app.route('/delete_post/<int:pid>', methods=['GET'])
 def delete_post(pid):
     """
     Delete a blog post
     :param pid: (Int) - Post id.
     :return: Redirect
     """
-    if session.get('logged_in'):
-        fields = ('pid',)
-        values = (pid,)
-        mydb.delete(g.db, 'posts', fields, values)
-        return redirect(url_for('dashboard'))
-    else:
-        return redirect(url_for('login'))
+    fields = ('pid',)
+    values = (pid,)
+    mydb.delete(g.db, 'posts', fields, values)
+    return redirect(url_for('dashboard'))
 
 
-@app.route('/edit_post/<int:pid>', methods=['GET', 'POST'])
+@app.route('/edit_post/<int:pid>', methods=['GET'])
 def edit_post(pid):
     """
     Update a post
@@ -195,6 +187,24 @@ def edit_post(pid):
             return render_template('newpost.html', entry=form)
     else:
         return redirect(url_for('login'))
+
+
+@app.route('/add_user', methods=['GET', 'POST'])
+def add_user():
+    if session.get('logged_in'):
+        values = list()
+        values.append(request.form['username'])
+        values.append(request.form['fname'])
+        values.append(request.form['lname'])
+        values.append(request.form['password'])
+        values.append(request.form['email'])
+        values = tuple(values)
+        fields = ('username', 'fname', 'lname', 'password', 'email')
+        mydb.insert(g.db, 'users', fields, values)
+        return redirect(url_for('dashboard'))
+    else:
+        return redirect(url_for('login'))
+
 
 
 if __name__ == '__main__':

@@ -16,7 +16,42 @@
 {% block contents %}
     <h1> Dashboard </h1>
     <div id="display">
+        <div id="nav">
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
         <table>
+        {% if user == 'admin' %}
+            <form action="{{ url_for('add_user') }}" name="add-user" method="post">
+            <tr>
+                <td colspan="3"><strong>Create a New user</strong></td>
+            </tr>
+            <tr>
+                <td>First Name:</td>
+                <td colspan="2"><input type="text" name="fname" size="20"/></td>
+            </tr>
+            <tr>
+                <td>Last Name</td>
+                <td colspan="2"><input type="text" name="lname" size="20"/></td>
+            </tr>
+            <tr>
+                <td>Username</td>
+                <td colspan="2"><input type="text" name="username" size="20"/></td>
+            </tr>
+            <tr>
+                <td>Password</td>
+                <td colspan="2"><input type="password" name="password" size="20"/></td>
+            </tr>
+            <tr>
+                <td>Email Address</td>
+                <td colspan="2"><input type="text" name="email" size="20"/></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <input type="submit" name="Create" value="Create User"/>
+                </td>
+            </tr>
+            </form>
+        {% endif %}
         {% for row in entries %}
             <tr>
                 <td>
@@ -36,21 +71,19 @@
                 {% endif %}
                 </form>
                 </td>
-
                 <td>
                     <form action="{{ url_for('edit_post', pid=row['pid']) }}" method="get", name="edit">
                         <input type="submit" name="edit" value="Edit"/>
                     </form>
                 </td>
-
-
                 <td>
-                    <form action="{{ url_for('delete_post', pid=row['pid']) }}" method="post", name="del">
+                    <form action="{{ url_for('delete_post', pid=row['pid']) }}" method="get", name="del">
                         <input type="submit" name="delete" value="Delete"/>
                     </form>
                 </td>
             </tr>
         {% endfor %}
+
         </table>
         <p>
             <a href="{{ url_for('show') }}">View Posts</a>

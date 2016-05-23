@@ -12,7 +12,7 @@
 {% endblock %}
 {% block contents %}
 
-    <form action="/login" method="post" name="frmLogin">
+    <form action="{{ url_for('login') }}" method="post" name="login">
         <div class="input-div">
             <fieldset>
                 <legend>Log on</legend>
@@ -26,11 +26,9 @@
             <input id="submit" name="btnLogin" type="submit" value="Login"/>
         </div>
     </form>
-    <![CDATA[
-        {% if error %}
-        ]]>
+
+    {% if error %}
     <div id="error"><strong>Error:</strong>{{ error }}</div>
-    <![CDATA[
-        {% endif %}
-        ]]>
+    {% endif %}
+
 {% endblock %}
