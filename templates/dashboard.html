@@ -1,0 +1,59 @@
+{% extends 'generic.html' %}
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+{% block title %}Manage Posts{% endblock %}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="/static/jquery-ui.min.css"/>
+    <link rel="stylesheet" href="/static/jquery-ui.structure.min.css"/>
+    <link rel="stylesheet" href="/static/jquery-ui.theme.min.css"/>
+    <script type="javascript" language="javascript" src="/static/jquery-ui.min.js"/>
+    <script type="javascript" language="javascript">
+
+    </script>
+{% endblock %}
+{% block contents %}
+    <h1> Dashboard </h1>
+    <div id="display">
+        <table>
+        {% for row in entries %}
+            <tr>
+                <td>
+                    {{ row['title'] }}
+                </td>
+                <td>
+                <form action="{{ url_for('dashboard') }}" method="post" name="pub">
+                    <input type="hidden" name="pid" value="{{ row['pid'] }}"/>
+                {% if row['state'] == 1 %}
+
+                        <input type="submit" name="state" value="Unpublish" />
+
+                {% else %}
+
+                        <input type="submit" name="state" value="Publish"/>
+
+                {% endif %}
+                </form>
+                </td>
+
+                <td>
+                    <form action="{{ url_for('edit_post', pid=row['pid']) }}" method="get", name="edit">
+                        <input type="submit" name="edit" value="Edit"/>
+                    </form>
+                </td>
+
+
+                <td>
+                    <form action="{{ url_for('delete_post', pid=row['pid']) }}" method="post", name="del">
+                        <input type="submit" name="delete" value="Delete"/>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </table>
+        <p>
+            <a href="{{ url_for('show') }}">View Posts</a>
+        </p>
+    </div>
+{% endblock %}

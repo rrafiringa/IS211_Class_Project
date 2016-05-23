@@ -17,11 +17,21 @@ CREATE TABLE IF NOT EXISTS posts (
   ts       DATETIME NOT NULL DEFAULT (datetime('now')),
   title    VARCHAR  NOT NULL,
   post     VARCHAR,
-  kwords   INTEGER,
+  state    INTEGER DEFAULT 1,
   username VARCHAR REFERENCES users (username) ON DELETE SET NULL
 );
 
 DROP INDEX IF EXISTS posts_idx;
 CREATE INDEX IF NOT EXISTS posts_idx ON posts (pid);
+
+INSERT INTO users (username,
+                   fname,
+                   lname,
+                   password,
+                   email) VALUES ('admin',
+                                  'John',
+                                  'Admin',
+                                  'password',
+                                  'admin@blogger.com')
 
 

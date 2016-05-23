@@ -74,20 +74,45 @@ class DBInterface(object):
         query = 'INSERT INTO {} ({}) VALUES ({})'.format(
             self.table, ', '.join(fields),
             ', '.join(['?'] * len(values)))
-        cur = conn.cursor()
-        cur.execute(query)
+        cur = conn.execute(query, values)
+        conn.commit()
         stat = cur.lastrowid
+        cur.close()
+        return stat
+
+    def update(self, conn, table, index, fields, values):
+        """
+        Update a blog post
+        :param conn:
+        :param table:
+        :param index:
+        :param fields:
+        :param values:
+        :return:
+        """
+        self.table = table
+        query = 'UPDATE {} SET '.format(self.table)
+        query += ', '.join([' = '.join(items)
+                            for items in zip(fields,
+                                             '?' * len(values))])
+        query += ' WHERE {} = {}'.format(index.get('field'),
+                                         index.get('value'))
+
+        cur = conn.cursor()
+        cur.execute(query, values)
+        stat = conn.commit()
         cur.close()
         return stat
 
     def delete(self, conn, table, fields=(), values=(), operator=None):
         """
-        Deletes item from table
-        :param conn: (Object) - sqlite3 database connection
-        :param table: (String) Table name
-        :param conditions: (Dict) - Query conditions in the
-        format {'='|'>'|'<'|'>='|'<=':{'field1': 'value'}}
-        :return: (Int) 0: success | non-zero: rollback
+        Delete from table
+        :param conn: (Object) - Database connection
+        :param table: (String) - Table name
+        :param fields: (Tuple) - Column list
+        :param values: (Tuple) - Values list
+        :param operator: (String) - Conditional operator (AND|OR)
+        :return:
         """
         self.table = table
         query = 'DELETE FROM ' + self.table

@@ -10,14 +10,14 @@ import os
 import logging
 
 from flask import Flask, request, g, redirect, url_for, \
-    render_template, session
+    render_template, session, flash
 
 DATABASE = 'blog.db'
 DDL = 'schema.sql'
 DEBUG = True
 SECRET_KEY = 'My secret is safe'
 USERNAME = 'admin'
-PASSWORD = 'password'
+PASSWORD = 'tmp@99!'
 LOG = 'blogger.log'
 
 app = Flask(__name__)
@@ -27,28 +27,51 @@ app.config.from_object(__name__)
 mydb = db(app)
 
 
+def getentries(conn, user=None, pid=None):
+    """
+    Fetch blog posts
+    :param conn: (Object) - Database connection object
+    :param user: (String) - Username
+    :param pid: (Int) - Post ID
+    :return: (Object) - Database fetched results
+    """
+    query = 'SELECT * FROM posts'
+    if user is not None:
+        query += ' WHERE username = "{}"'.format(user)
+    if pid is not None:
+        query += ' WHERE pid = {}'.format(pid)
+    query += ' ORDER BY ts DESC'
+    return mydb.getdata(conn, query)
+
+
+@app.before_request
+def connect():
+    """
+    Create database connection object into g
+    :return: None
+    """
+    g.db = mydb.db_connect(app)
+
+
 @app.route('/')
 def show():
     """
-    First page
     Display blog
+    :return: HTML document
     """
-    table = 'posts'
-    query = 'SELECT * FROM {} ORDER BY ts DESC'.format(table)
-    g.db = mydb.db_connect(app)
-    entries = mydb.getdata(g.db, query)
-    return render_template('blog.html', entries=entries)
+    sid = session.get('username')
+    return render_template('blog.html', entries=getentries(g.db), user_id=sid)
 
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
+@app.route('/logout')
+def logout():
     """
-    Register new user
-    :return:
+    Logout user
+    :return: URL redirect
     """
-    if request.method == 'POST':
-        pass
-    return url_for('login')
+    session.pop('logged_in', None)
+    session.pop('username', None)
+    return redirect(url_for('show'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -58,25 +81,120 @@ def login():
     On success: go to /dashboard
     On fail: Go to /login with error
     """
+    session['logged_in'] = False
     error = None
     if request.method == 'POST':
         user = request.form['user'].strip()
         pwd = request.form['pass'].strip()
-        if user == app.config['USERNAME'] and pwd == app.config['PASSWORD']:
-            return redirect('/posts')
+
+        query = 'SELECT * FROM users WHERE username = "{}"'.format(user)
+        rows = mydb.getdata(g.db, query)
+        for row in rows:
+            if user == row['username'] and pwd == row['password']:
+                session['username'] = row['username']
+                session['logged_in'] = True
         else:
             error = 'Wrong credentials, please try again.'
-    return render_template('login.html', error=error)
+
+        if session['logged_in']:
+            return redirect(url_for('dashboard'))
+    else:
+        return render_template('login.html', error=error)
+
+
+@app.route('/dashboard', methods=['GET', 'POST'])
+def dashboard():
+    """
+    Manage posts
+    :return:
+    """
+    if session.get('logged_in'):
+        if request.method == 'POST':
+            pid = request.form['pid']
+            pub = request.form['state']
+            index = {'field': 'pid', 'value': pid}
+            if pub == 'Unpublish':
+                action = 0
+            else:
+                action = 1
+            mydb.update(g.db, 'posts', index, ('state',), (action,))
+
+        else:
+            user = session.get('username')
+        return render_template('dashboard.html',
+                               entries=getentries(g.db, user))
+    else:
+        return redirect(url_for('login'))
 
 
 @app.route('/new_post', methods=['GET', 'POST'])
 def new_post():
+    """
+    Add a new blog post
+    :return: Redirect|HTML
+    """
     if request.method == 'POST':
         title = request.form['title']
-        contents = request.form['contents']
+        contents = request.form['post']
+        username = request.form['username']
+        mydb.insert(g.db, 'posts',
+                    ('title', 'post', 'username'),
+                    (title, contents, username))
+
     else:
-        render_template('entry.html')
-    return redirect(url_for('show'))
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        else:
+            form = dict()
+            form['username'] = session['username']
+            form['title'] = ''
+            form['post'] = ''
+            form['action'] = url_for('new_post')
+            return render_template('newpost.html', entry=form)
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/delete_post/<int:pid>')
+def delete_post(pid):
+    """
+    Delete a blog post
+    :param pid: (Int) - Post id.
+    :return: Redirect
+    """
+    if session.get('logged_in'):
+        fields = ('pid',)
+        values = (pid,)
+        mydb.delete(g.db, 'posts', fields, values)
+        return redirect(url_for('dashboard'))
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/edit_post/<int:pid>', methods=['GET', 'POST'])
+def edit_post(pid):
+    """
+    Update a post
+    :param pid: (Int) - Blog post id
+    :return: Redirect|HTML
+    """
+    if session.get('logged_in'):
+        if request.method == 'POST':
+            fields = ('title', 'post')
+            values = (request.form['title'], request.form['post'])
+            index = {'field': 'pid', 'value': pid}
+            mydb.update(g.db, 'posts', index, fields, values)
+            return redirect(url_for('dashboard'))
+        else:
+            rows = getentries(g.db, pid=pid)
+            form = dict()
+            form['action'] = url_for('edit_post', pid=pid)
+            for row in rows:
+                form['title'] = row['title']
+                form['post'] = row['post']
+                form['username'] = row['username']
+            return render_template('newpost.html', entry=form)
+    else:
+        return redirect(url_for('login'))
 
 
 if __name__ == '__main__':
