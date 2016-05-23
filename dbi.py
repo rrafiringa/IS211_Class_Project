@@ -96,7 +96,7 @@ class DBInterface(object):
                             for items in zip(fields,
                                              '?' * len(values))])
         query += ' WHERE {} = {}'.format(index.get('field'),
-                                         index.get('value'))
+                                           index.get('value'))
 
         cur = conn.cursor()
         cur.execute(query, values)
@@ -117,7 +117,6 @@ class DBInterface(object):
         self.table = table
         query = 'DELETE FROM ' + self.table
 
-        cond = ''
         if len(fields) > 0 and len(fields) == len(values):
             cond = ' WHERE '
             if operator is not None:

@@ -5,15 +5,10 @@
 {% block title %}Best Blog Ever::New Post{% endblock %}
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" href="/static/jquery-ui.min.css"/>
-    <link rel="stylesheet" href="/static/jquery-ui.structure.min.css"/>
-    <link rel="stylesheet" href="/static/jquery-ui.theme.min.css"/>
-    <script type="javascript" language="javascript" src="/static/jquery-ui.min.js"/>
-    <script type="javascript" language="javascript">
-    </script>
 {% endblock %}
 {% block contents %}
     <div><h1>New post</h1></div>
+    <div><a href="{{ url_for('show') }}">Return...</a> </div>
     <div>
     <form name="frmEntry" action="{{ entry['action'] }}" method="post">
         <dl>

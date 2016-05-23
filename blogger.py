@@ -5,12 +5,10 @@
 Description
 """
 
-from dbi import DBInterface as db
-import os
-import logging
+from dbi import DBInterface as Db_Broker
 
 from flask import Flask, request, g, redirect, url_for, \
-    render_template, session, flash
+    render_template, session
 
 DATABASE = 'blog.db'
 DDL = 'schema.sql'
@@ -24,10 +22,10 @@ app = Flask(__name__)
 
 app.config.from_object(__name__)
 
-mydb = db(app)
+my_db = Db_Broker(app)
 
 
-def getentries(conn, user=None, pid=None):
+def get_entries(conn, user=None, pid=None):
     """
     Fetch blog posts
     :param conn: (Object) - Database connection object
@@ -41,7 +39,20 @@ def getentries(conn, user=None, pid=None):
     if pid is not None:
         query += ' WHERE pid = {}'.format(pid)
     query += ' ORDER BY ts DESC'
-    return mydb.getdata(conn, query)
+    return my_db.getdata(conn, query)
+
+
+def get_userdata(conn, username=None):
+    """
+    Get user info
+    :param conn: (Object) - Database connection
+    :param username: (String) - Username of user to retrieve
+    :return: (Object) - Database fetched results
+    """
+    query = 'SELECT * FROM users'
+    if username is not None:
+        query += ' WHERE username = "{}"'.format(username)
+    return my_db.getdata(conn, query)
 
 
 @app.before_request
@@ -50,7 +61,7 @@ def connect():
     Create database connection object into g
     :return: None
     """
-    g.db = mydb.db_connect(app)
+    g.db = my_db.db_connect(app)
 
 
 @app.route('/')
@@ -60,7 +71,7 @@ def show():
     :return: HTML document
     """
     sid = session.get('username')
-    return render_template('blog.html', entries=getentries(g.db), user_id=sid)
+    return render_template('blog.html', entries=get_entries(g.db), user_id=sid)
 
 
 @app.route('/logout')
@@ -88,7 +99,7 @@ def login():
         pwd = request.form['pass'].strip()
 
         query = 'SELECT * FROM users WHERE username = "{}"'.format(user)
-        rows = mydb.getdata(g.db, query)
+        rows = my_db.getdata(g.db, query)
         for row in rows:
             if user == row['username'] and pwd == row['password']:
                 session['username'] = row['username']
@@ -114,10 +125,16 @@ def dashboard():
                 action = 0
             else:
                 action = 1
-            mydb.update(g.db, 'posts', index, ('state',), (action,))
+            my_db.update(g.db, 'posts', index, ('state',), (action,))
+
         user = session['username']
+        entries = get_entries(g.db, user)
+        g.db = my_db.db_connect(app)
+        usr_data = get_userdata(g.db)
         return render_template('dashboard.html',
-                               entries=getentries(g.db, user), user=user)
+                               entries=entries,
+                               userdata=usr_data,
+                               user=user)
     else:
         return redirect(url_for('login'))
 
@@ -132,9 +149,9 @@ def new_post():
         title = request.form['title']
         contents = request.form['post']
         username = request.form['username']
-        mydb.insert(g.db, 'posts',
-                    ('title', 'post', 'username'),
-                    (title, contents, username))
+        my_db.insert(g.db, 'posts',
+                     ('title', 'post', 'username'),
+                     (title, contents, username))
 
     else:
         if not session.get('logged_in'):
@@ -149,7 +166,7 @@ def new_post():
     return redirect(url_for('dashboard'))
 
 
-@app.route('/delete_post/<int:pid>', methods=['GET'])
+@app.route('/delete_post/<int:pid>', methods=['GET', 'POST'])
 def delete_post(pid):
     """
     Delete a blog post
@@ -158,11 +175,11 @@ def delete_post(pid):
     """
     fields = ('pid',)
     values = (pid,)
-    mydb.delete(g.db, 'posts', fields, values)
+    my_db.delete(g.db, 'posts', fields, values)
     return redirect(url_for('dashboard'))
 
 
-@app.route('/edit_post/<int:pid>', methods=['GET'])
+@app.route('/edit_post/<int:pid>', methods=['GET', 'POST'])
 def edit_post(pid):
     """
     Update a post
@@ -174,10 +191,10 @@ def edit_post(pid):
             fields = ('title', 'post')
             values = (request.form['title'], request.form['post'])
             index = {'field': 'pid', 'value': pid}
-            mydb.update(g.db, 'posts', index, fields, values)
+            my_db.update(g.db, 'posts', index, fields, values)
             return redirect(url_for('dashboard'))
         else:
-            rows = getentries(g.db, pid=pid)
+            rows = get_entries(g.db, pid=pid)
             form = dict()
             form['action'] = url_for('edit_post', pid=pid)
             for row in rows:
@@ -191,6 +208,10 @@ def edit_post(pid):
 
 @app.route('/add_user', methods=['GET', 'POST'])
 def add_user():
+    """
+    Add a user
+    :return: Redirect
+    """
     if session.get('logged_in'):
         values = list()
         values.append(request.form['username'])
@@ -200,12 +221,24 @@ def add_user():
         values.append(request.form['email'])
         values = tuple(values)
         fields = ('username', 'fname', 'lname', 'password', 'email')
-        mydb.insert(g.db, 'users', fields, values)
+        my_db.insert(g.db, 'users', fields, values)
         return redirect(url_for('dashboard'))
     else:
         return redirect(url_for('login'))
 
 
+@app.route('/delete_user/<string:username>', methods=['GET', 'POST'])
+def delete_user(username):
+    """
+    Delete a user
+    :param username: (String) Username
+    :return: Redirect
+    """
+    if session.get('logged_in'):
+        my_db.delete(g.db, 'users', ('username',), (username,))
+        return redirect(url_for('dashboard'))
+    else:
+        return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=app.config['DEBUG'])

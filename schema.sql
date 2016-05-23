@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS posts (
   title    VARCHAR  NOT NULL,
   post     VARCHAR,
   state    INTEGER DEFAULT 1,
-  username VARCHAR REFERENCES users (username) ON DELETE SET NULL
+  username VARCHAR REFERENCES users (username) ON DELETE CASCADE
 );
 
 DROP INDEX IF EXISTS posts_idx;
