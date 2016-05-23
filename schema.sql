@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 DROP TABLE IF EXISTS posts;
 CREATE TABLE IF NOT EXISTS posts (
   pid      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
-  ts       DATETIME NOT NULL DEFAULT (datetime('now')),
+  ts       DATETIME NOT NULL DEFAULT (datetime('now', 'localtime')),
   title    VARCHAR  NOT NULL,
   post     VARCHAR,
   state    INTEGER DEFAULT 1,

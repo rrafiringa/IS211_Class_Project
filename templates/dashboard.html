@@ -17,7 +17,8 @@
     <h1> Dashboard </h1>
     <div id="display">
         <div id="nav">
-            <a href="{{ url_for('logout') }}">Logout</a>
+            <span><a href="{{ url_for('logout') }}">|: Logout :|</a></span>
+            <span><a href="{{ url_for('show') }}">|: View Posts :|</a></span>
         </div>
         <table>
         {% if user == 'admin' %}
@@ -118,8 +119,6 @@
         {% endfor %}
 
         </table>
-        <p>
-            <a href="{{ url_for('show') }}">View Posts</a>
-        </p>
+
     </div>
 {% endblock %}

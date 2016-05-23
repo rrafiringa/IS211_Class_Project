@@ -2,7 +2,7 @@
 # -*- Coding: Utf-8 -*-
 
 """
-Description
+Blog web application
 """
 
 from dbi import DBInterface as Db_Broker
@@ -78,7 +78,7 @@ def show():
 def logout():
     """
     Logout user
-    :return: URL redirect
+    :return: Redirect
     """
     session.pop('logged_in', None)
     session.pop('username', None)
@@ -114,7 +114,7 @@ def login():
 def dashboard():
     """
     Manage posts
-    :return:
+    :return: Redirect|HTML
     """
     if session.get('logged_in'):
         if request.method == 'POST':
