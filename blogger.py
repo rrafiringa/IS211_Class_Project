@@ -128,7 +128,11 @@ def dashboard():
             my_db.update(g.db, 'posts', index, ('state',), (action,))
 
         user = session['username']
-        entries = get_entries(g.db, user)
+        if user == 'admin':
+            entries = get_entries(g.db)
+        else:
+            entries = get_entries(g.db, user)
+
         g.db = my_db.db_connect(app)
         usr_data = get_userdata(g.db)
         return render_template('dashboard.html',
